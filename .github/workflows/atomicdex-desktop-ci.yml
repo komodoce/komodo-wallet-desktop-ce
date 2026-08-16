@@ -3,7 +3,7 @@ name: komodo-wallet-desktop CI
 on:
   push:
     branches:
-      - nogeo
+      - ce
   # Allows a build to be started by hand against any branch, from the Actions
   # tab or `gh workflow run`. Automatic runs are unchanged: only a push to the
   # branches above starts one, so this costs nothing until somebody explicitly
