@@ -42,7 +42,7 @@ namespace antara::gaming::world
             return this->game_return_value_;
         }
 
-        this->dispatcher_.trigger<event::start_game>();
+        this->dispatcher_.trigger(event::start_game{});
         this->is_running_ = true;
         this->system_manager_.start();
 

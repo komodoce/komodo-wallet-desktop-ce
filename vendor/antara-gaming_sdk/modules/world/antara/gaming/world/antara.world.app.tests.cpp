@@ -48,7 +48,7 @@ namespace antara::gaming::world::tests
             counter += 1;
             if (counter == 10ull)
             {
-                this->dispatcher_.trigger<event::quit_game>(42);
+                this->dispatcher_.trigger<event::quit_game>(event::quit_game{42});
             }
         }
 

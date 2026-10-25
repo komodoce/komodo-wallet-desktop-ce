@@ -41,7 +41,7 @@ namespace atomic_dex
         connect(reply, &QNetworkReply::downloadProgress, this, &qt_downloader::download_progress);
         m_download_reply = reply;
         m_current_downloads.append(reply);
-        m_dispatcher.trigger<download_started>();
+        m_dispatcher.trigger(download_started{});
     }
 
     void
@@ -63,7 +63,7 @@ namespace atomic_dex
             if (!file.open(QIODevice::WriteOnly))
             {
                 SPDLOG_ERROR("Could not open {} for writing: {}", utils::u8string(m_download_path), file.errorString().toStdString());
-                m_dispatcher.trigger<download_failed>();
+                m_dispatcher.trigger(download_failed{});
                 return false;
             }
 
@@ -83,7 +83,7 @@ namespace atomic_dex
             if (save_disk_functor(reply))
             {
                 SPDLOG_INFO("Successfully saved {} to {}", url.toString().toStdString(), utils::u8string(m_download_path));
-                m_dispatcher.trigger<download_complete>();
+                m_dispatcher.trigger(download_complete{});
             }
         }
 

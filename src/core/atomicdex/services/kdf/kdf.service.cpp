@@ -540,7 +540,7 @@ namespace atomic_dex
         auto                     coins = get_active_coins();
         
         enable_coins(coins);
-        this->dispatcher_.trigger<default_coins_enabled>();
+        this->dispatcher_.trigger(default_coins_enabled{});
         return result.load() == 1;
     }
 
@@ -2031,7 +2031,7 @@ namespace atomic_dex
         SPDLOG_DEBUG("balance factor is: {}", m_balance_factor);
         this->m_current_wallet_name = std::move(wallet_name);
         this->dispatcher_.trigger(coin_cfg_parsed{.cfg = this->retrieve_coins_informations()});
-        this->dispatcher_.trigger<force_update_providers>();
+        this->dispatcher_.trigger(force_update_providers{});
         kdf_config cfg{
             .passphrase = std::move(passphrase), 
             .rpc_password = std::move(rpcpass) == "" ? std::move(atomic_dex::gen_random_password()) : std::move(rpcpass)
@@ -2107,7 +2107,7 @@ namespace atomic_dex
                 std::filesystem::remove(kdf_cfg_path);
                 crash::clear_kdf_cfg();
                 SPDLOG_INFO("kdf is initialized");
-                dispatcher_.trigger<kdf_initialized>();
+                dispatcher_.trigger(kdf_initialized{});
                 enable_default_coins();
 
                 // Initialize clean reference anchors on boot execution pass
@@ -2118,7 +2118,7 @@ namespace atomic_dex
                 m_last_activation_fire_time = startup_time - std::chrono::hours(1);
 
                 m_kdf_running = true;
-                dispatcher_.trigger<kdf_started>();
+                dispatcher_.trigger(kdf_started{});
             });
     }
 
@@ -2342,7 +2342,7 @@ namespace atomic_dex
                 }
             }
 
-            this->dispatcher_.trigger<process_swaps_and_orders_finished>();
+            this->dispatcher_.trigger(process_swaps_and_orders_finished{});
         };
 
         m_kdf_client.async_rpc_batch_standalone(std::move(batch), t_http_priority::interactive)

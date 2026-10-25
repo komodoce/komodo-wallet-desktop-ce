@@ -276,8 +276,8 @@ namespace atomic_dex
         {
             spdlog::stopwatch sw; using namespace std::chrono;
             atomic_dex::change_currency(m_config, current_currency.toStdString());
-            this->dispatcher_.trigger<force_update_providers>();
-            this->dispatcher_.trigger<update_portfolio_values>();
+            this->dispatcher_.trigger(force_update_providers{});
+            this->dispatcher_.trigger(update_portfolio_values{});
             emit onCurrencyChanged();
             emit onCurrencySignChanged();
             emit onFiatSignChanged();

@@ -359,12 +359,12 @@ namespace atomic_dex
                         {
                             get_wallet_page()->get_transactions_mdl()->reset();
                         }
-                        this->dispatcher_.trigger<tx_fetch_finished>();
+                        this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = ""});
                     }
                     get_wallet_page()->refresh_ticker_infos();
                     system_manager_.get_system<qt_wallet_manager>().set_status("complete");
                 }
-                this->dispatcher_.trigger<update_portfolio_values>();
+                this->dispatcher_.trigger<update_portfolio_values>(update_portfolio_values{});
             }
         }
 
@@ -632,7 +632,7 @@ namespace atomic_dex
     void
     application::on_fiat_rate_updated(const fiat_rate_updated&)
     {
-        this->dispatcher_.trigger<update_portfolio_values>();
+        this->dispatcher_.trigger<update_portfolio_values>(update_portfolio_values{});
     }
 
     void

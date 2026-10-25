@@ -107,7 +107,7 @@ namespace antara::gaming::ecs
         }
         auto creator = [this](auto&&... args_) { return std::make_unique<TSystem>(this->entity_registry_, std::forward<decltype(args_)>(args_)...); };
 
-        this->dispatcher_.trigger<event::add_base_system>(creator(std::forward<TSystemArgs>(args)...));
+        this->dispatcher_.trigger<event::add_base_system>(event::add_base_system{creator(std::forward<TSystemArgs>(args)...)});
     }
 
     template <typename... TSystems, typename... TArgs>

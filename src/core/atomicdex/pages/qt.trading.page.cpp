@@ -129,7 +129,7 @@ namespace atomic_dex
     void
     trading_page::on_gui_enter_dex()
     {
-        dispatcher_.trigger<gui_enter_trading>();
+        dispatcher_.trigger(gui_enter_trading{});
         if (this->m_system_manager.has_system<auto_update_maker_order_service>() && m_system_manager.get_system<kdf_service>().is_orderbook_thread_active())
         {
             this->m_system_manager.get_system<auto_update_maker_order_service>().force_update();
@@ -140,7 +140,7 @@ namespace atomic_dex
     trading_page::on_gui_leave_dex()
     {
         //m_system_manager.get_system<settings_page>().garbage_collect_qml();
-        dispatcher_.trigger<gui_leave_trading>();
+        dispatcher_.trigger(gui_leave_trading{});
     }
 
     void

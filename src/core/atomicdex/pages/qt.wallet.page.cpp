@@ -508,11 +508,11 @@ namespace atomic_dex
         m_page_open = value;
         if (value)
         {
-            dispatcher_.trigger<gui_enter_wallet>();
+            dispatcher_.trigger(gui_enter_wallet{});
         }
         else
         {
-            dispatcher_.trigger<gui_leave_wallet>();
+            dispatcher_.trigger(gui_leave_wallet{});
         }
         emit isPageOpenChanged();
     }
