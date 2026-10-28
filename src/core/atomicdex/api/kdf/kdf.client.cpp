@@ -14,6 +14,7 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <chrono>
 #include <filesystem>
 #include <meta/detection/detection.hpp>
 #include "kdf.hpp"
@@ -36,9 +37,13 @@ namespace
     template <typename T>
     using have_error_field = decltype(std::declval<T&>().error.has_value());
 
-    t_http_client generate_client()
+    t_http_client generate_client(std::chrono::seconds timeout = std::chrono::seconds::zero())
     {
         atomic_dex::http::client_config cfg;
+        if (timeout > std::chrono::seconds::zero())
+        {
+            cfg.set_timeout(timeout);
+        }
         return t_http_client(atomic_dex::g_dex_rpc, cfg);
     }
 
@@ -196,19 +201,19 @@ namespace atomic_dex::kdf
     }
 
     async::task<t_http_response>
-    kdf_client::async_rpc_batch_standalone(nlohmann::json&& batch_array, t_http_priority prio)
+    kdf_client::async_rpc_batch_standalone(nlohmann::json&& batch_array, t_http_priority prio, std::chrono::seconds timeout)
     {
         auto& scheduler = (prio == t_http_priority::background)
                           ? atomic_dex::http::client::get_background_scheduler()
                           : atomic_dex::http::client::get_interactive_scheduler();
 
-        return async::spawn(scheduler, [batch_array = std::move(batch_array), prio]() mutable {
+        return async::spawn(scheduler, [batch_array = std::move(batch_array), prio, timeout]() mutable {
             try
             {
                 t_http_request request;
                 request.set_method(http_method::POST);
                 request.set_body(batch_array.dump());
-                auto resp = generate_client().request(request, prio);
+                auto resp = generate_client(timeout).request(request, prio);
                 return resp.get();
             }
             catch (const std::exception& error)
@@ -277,7 +282,7 @@ namespace atomic_dex::kdf
 
     template <typename TRequest, typename TAnswer>
     TAnswer
-    kdf_client::process_rpc(TRequest&& request, std::string rpc_command, bool is_v2)
+    kdf_client::process_rpc(TRequest&& request, std::string rpc_command, bool is_v2, std::chrono::seconds timeout)
     {
         nlohmann::json json_data = kdf::template_request(rpc_command, is_v2);
         kdf::to_json(json_data, request);
@@ -293,7 +298,7 @@ namespace atomic_dex::kdf
         //! transport failure becomes an ordinary failed answer instead.
         try
         {
-            auto resp = generate_client().request(rpc_request).get();
+            auto resp = generate_client(timeout).request(rpc_request).get();
             return rpc_process_answer<TAnswer>(resp, rpc_command);
         }
         catch (const std::exception& error)
@@ -329,7 +334,10 @@ namespace atomic_dex::kdf
     kdf_client::rpc_recover_funds(t_recover_funds_of_swap_request&& request)
     {
         return process_rpc<t_recover_funds_of_swap_request, t_recover_funds_of_swap_answer>(
-            std::forward<t_recover_funds_of_swap_request>(request), "recover_funds_of_swap");
+            std::forward<t_recover_funds_of_swap_request>(request),
+            "recover_funds_of_swap",
+            false,
+            std::chrono::minutes(10));
     }
 } // namespace atomic_dex
 

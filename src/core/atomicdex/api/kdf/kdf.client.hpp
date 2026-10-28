@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <functional>
 #include <entt/config/config.h>
 #include <async++.h>
@@ -19,7 +20,8 @@ namespace atomic_dex::kdf
 
         async::task<t_http_response> async_rpc_batch_standalone(
             nlohmann::json&& batch_array,
-            t_http_priority prio = t_http_priority::interactive
+            t_http_priority prio = t_http_priority::interactive,
+            std::chrono::seconds timeout = std::chrono::seconds::zero()
         );
 
         template <rpc Rpc>
@@ -37,7 +39,7 @@ namespace atomic_dex::kdf
 
         //! Synced
         template <typename TRequest, typename TAnswer>
-        TAnswer process_rpc(TRequest&& request, std::string rpc_command, bool is_v2 = false);
+        TAnswer process_rpc(TRequest&& request, std::string rpc_command, bool is_v2 = false, std::chrono::seconds timeout = std::chrono::seconds::zero());
 
         template <typename RpcReturnType>
         RpcReturnType rpc_process_answer(const t_http_response& resp, const std::string& rpc_command);

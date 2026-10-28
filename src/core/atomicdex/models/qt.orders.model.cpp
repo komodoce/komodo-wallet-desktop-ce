@@ -14,6 +14,7 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <chrono>
 #include <algorithm>
 #include <QTimer>
 #include "atomicdex/api/kdf/rpc_v1/rpc.recover_funds_of_swap.hpp"
@@ -857,7 +858,12 @@ namespace atomic_dex
             this->set_recover_fund_busy(false);
         };
 
-        kdf_system.get_kdf_client().async_rpc_batch_standalone(std::move(batch)).then(
+        kdf_system.get_kdf_client()
+            .async_rpc_batch_standalone(
+                std::move(batch),
+                t_http_priority::interactive,
+                std::chrono::minutes(10))
+            .then(
             [this, answer_functor](async::task<t_http_response> previous_task)
             {
                 try
