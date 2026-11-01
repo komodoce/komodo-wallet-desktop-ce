@@ -437,7 +437,7 @@ namespace atomic_dex
             {
                 const QString& base_coin = data(idx, OrdersRoles::BaseCoinRole).toString();
                 const QString& rel_coin  = data(idx, OrdersRoles::RelCoinRole).toString();
-                m_dispatcher.trigger(
+                m_dispatcher.enqueue(
                     swap_status_notification{.uuid = contents.order_id,
                                              .prev_status = prev_value.toString(),
                                              .new_status = contents.order_status,
@@ -503,7 +503,7 @@ namespace atomic_dex
                 // Trigger notification instantly on discovery for new uncompleted tracking loops
                 if (cur.order_status == "matching" || cur.order_status == "ongoing" || cur.order_status == "matched")
                 {
-                    m_dispatcher.trigger(
+                    m_dispatcher.enqueue(
                         swap_status_notification{.uuid = cur.order_id,
                                                  .prev_status = "None",
                                                  .new_status = cur.order_status,
@@ -545,7 +545,7 @@ namespace atomic_dex
                     {
                         if (it->order_status != cur.order_status)
                         {
-                            m_dispatcher.trigger(
+                            m_dispatcher.enqueue(
                                 swap_status_notification{.uuid = cur.order_id,
                                                          .prev_status = it->order_status,
                                                          .new_status = cur.order_status,

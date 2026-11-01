@@ -594,7 +594,7 @@ namespace atomic_dex
 
         if (amount_f > 0.0)
         {
-            this->m_dispatcher.trigger(balance_update_notification{.am_i_sender = am_i_sender,
+            this->m_dispatcher.enqueue(balance_update_notification{.am_i_sender = am_i_sender,
                                                                    .amount = amount,
                                                                    .ticker = ticker,
                                                                    .human_date = human_date,

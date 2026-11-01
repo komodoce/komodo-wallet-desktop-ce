@@ -307,6 +307,7 @@ namespace atomic_dex
 
     void application::tick()
     {
+        this->dispatcher_.update();
         this->process_one_frame();
 
         if (m_event_actions[events_action::need_a_full_refresh_of_kdf])
@@ -317,6 +318,7 @@ namespace atomic_dex
         }
 
         auto& kdf = get_kdf();
+
         if (kdf.is_kdf_running())
         {
             std::vector<std::string> to_init;
@@ -334,7 +336,6 @@ namespace atomic_dex
                 {
                     this->m_secondary_coin_fully_enabled = true;
                 }
-                //! TODO: figure out why sometimes ZHTLC coins end up in here twice. When they do, without this check it crashes.
                 if (std::find(to_init.begin(), to_init.end(), ticker) != to_init.end()) {
                     SPDLOG_WARN("Ticker {} is already in vector", ticker);
                     add_to_init = false;
@@ -353,18 +354,16 @@ namespace atomic_dex
                 {
                     if (std::find(to_init.begin(), to_init.end(), g_primary_dex_coin) != to_init.end())
                     {
-                        // Only trigger a hard reset if the row data model array is currently populated.
-                        // If it's already empty, calling .reset() wastefully thrashes UI thread allocations.
                         if (get_wallet_page()->get_transactions_mdl()->rowCount() > 0)
                         {
                             get_wallet_page()->get_transactions_mdl()->reset();
                         }
-                        this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = ""});
+                        this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = ""});
                     }
                     get_wallet_page()->refresh_ticker_infos();
                     system_manager_.get_system<qt_wallet_manager>().set_status("complete");
                 }
-                this->dispatcher_.trigger<update_portfolio_values>(update_portfolio_values{});
+                this->dispatcher_.enqueue<update_portfolio_values>(update_portfolio_values{});
             }
         }
 

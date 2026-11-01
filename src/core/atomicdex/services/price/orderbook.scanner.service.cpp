@@ -70,7 +70,7 @@ namespace atomic_dex
                             this->m_best_orders_infos = rpc.result.value();
                         }
                         this->m_bestorders_busy = false;
-                        this->dispatcher_.trigger<process_orderbook_finished>(process_orderbook_finished{.is_a_reset = false});
+                        this->dispatcher_.enqueue<process_orderbook_finished>(process_orderbook_finished{.is_a_reset = false});
                         emit trading_pg.get_orderbook_wrapper()->bestOrdersBusyChanged();
                     }
                 };

@@ -193,7 +193,7 @@ namespace atomic_dex::http
 
             if (prio == priority::background)
             {
-                thread_local cpr::Session bg_session;
+                cpr::Session bg_session;
                 bg_session.SetUrl(cpr::Url{url});
                 bg_session.SetHeader(cpr_headers);
                 bg_session.SetVerifySsl(verify_ssl);
@@ -209,7 +209,7 @@ namespace atomic_dex::http
             }
             else // priority::interactive
             {
-                thread_local cpr::Session interactive_session;
+                cpr::Session interactive_session;
                 interactive_session.SetUrl(cpr::Url{url});
                 interactive_session.SetHeader(cpr_headers);
                 interactive_session.SetVerifySsl(verify_ssl);

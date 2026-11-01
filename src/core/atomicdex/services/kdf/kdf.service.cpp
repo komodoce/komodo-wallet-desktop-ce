@@ -530,7 +530,7 @@ namespace atomic_dex
             std::unique_lock lock(m_coin_cfg_mutex);
             m_coins_informations[ticker].currently_enabled = false;
         }
-        dispatcher_.trigger(coin_disabled{.ticker = ticker});
+        dispatcher_.enqueue(coin_disabled{.ticker = ticker});
         return true;
     }
 
@@ -540,7 +540,7 @@ namespace atomic_dex
         auto                     coins = get_active_coins();
         
         enable_coins(coins);
-        this->dispatcher_.trigger(default_coins_enabled{});
+        this->dispatcher_.enqueue(default_coins_enabled{});
         return result.load() == 1;
     }
 
@@ -712,7 +712,7 @@ namespace atomic_dex
                             else
                             {
                                 failed_coins.push_back(std::move(coins[idx]));
-                                this->dispatcher_.trigger(enabling_coin_failed{.coin = coins[idx].ticker, .reason = error});
+                                this->dispatcher_.enqueue(enabling_coin_failed{.coin = coins[idx].ticker, .reason = error});
                                 SPDLOG_ERROR("Error in kdf_service::enable_utxo_qrc20_coins: {}", error);
                             }
                         }
@@ -731,7 +731,7 @@ namespace atomic_dex
                         m_coins_informations[coin.ticker].currently_enabled = true;
                         tickers.push_back(coin.ticker);
                     }
-                    dispatcher_.trigger(coin_fully_initialized{.tickers = tickers});
+                    dispatcher_.enqueue(coin_fully_initialized{.tickers = tickers});
 
                     std::vector<std::string> failed_tickers;
                     for (auto&& coin: failed_coins)
@@ -821,7 +821,7 @@ namespace atomic_dex
                     SPDLOG_ERROR("{} {}: ", rpc.request.ticker, rpc.error->error_type);
                     std::unique_lock lock(m_coin_cfg_mutex);
                     m_coins_informations[rpc.request.ticker].currently_enabled = true;
-                    dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
+                    dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
                     if constexpr (std::is_same_v<RpcRequest, kdf::enable_eth_with_tokens_rpc>)
                     {
                         SPDLOG_ERROR("{} {}: ", rpc.request.ticker, rpc.error->error_type);
@@ -830,7 +830,7 @@ namespace atomic_dex
                             SPDLOG_ERROR("{} {}: ", erc20_coin_info.ticker, rpc.error->error_type);
                             std::unique_lock lock(m_coin_cfg_mutex);
                             m_coins_informations[erc20_coin_info.ticker].currently_enabled = true;
-                            dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {erc20_coin_info.ticker}});
+                            dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {erc20_coin_info.ticker}});
                         }
                     }
                 }
@@ -843,7 +843,7 @@ namespace atomic_dex
                     SPDLOG_ERROR("marking {} as inactive: {}", rpc.request.ticker, rpc.error->error_type);
                     std::unique_lock lock(m_coin_cfg_mutex);
                     m_coins_informations[rpc.request.ticker].currently_enabled = false;
-                    this->dispatcher_.trigger(enabling_coin_failed{.coin = rpc.request.ticker, .reason = rpc.error->error});
+                    this->dispatcher_.enqueue(enabling_coin_failed{.coin = rpc.request.ticker, .reason = rpc.error->error});
                 }
             }
             else
@@ -898,13 +898,13 @@ namespace atomic_dex
                     std::unique_lock lock(m_coin_cfg_mutex);
                     m_coins_informations[rpc.request.ticker].currently_enabled = true;
                 }
-                dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
+                dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
 
                 if constexpr (std::is_same_v<RpcRequest, kdf::enable_eth_with_tokens_rpc>)
                 {
                     for (const auto& ticker : activated_token_tickers)
                     {
-                        dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {ticker}});
+                        dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {ticker}});
                     }
                 }
             }
@@ -913,7 +913,7 @@ namespace atomic_dex
         if (!has_coin(parent_ticker))
         {
             static constexpr auto error = "{} is not present in the config. Cannot enable {} tokens.";
-            this->dispatcher_.trigger(enabling_coin_failed{.coin = parent_ticker, .reason = fmt::format(error, parent_ticker, parent_ticker)});
+            this->dispatcher_.enqueue(enabling_coin_failed{.coin = parent_ticker, .reason = fmt::format(error, parent_ticker, parent_ticker)});
             return;
         }
 
@@ -976,14 +976,14 @@ namespace atomic_dex
                     SPDLOG_ERROR("{} {}: ", rpc.request.ticker, rpc.error->error_type);
                     std::unique_lock lock(m_coin_cfg_mutex);
                     m_coins_informations[rpc.request.ticker].currently_enabled = true;
-                    dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
+                    dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
                     if constexpr (std::is_same_v<RpcRequest, kdf::enable_tendermint_with_assets_rpc>)
                     {
                         for (const auto& tendermint_coin_info : rpc.request.tokens_params)
                         {
                             std::unique_lock lock(m_coin_cfg_mutex);
                             m_coins_informations[tendermint_coin_info.ticker].currently_enabled = true;
-                            dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {tendermint_coin_info.ticker}});
+                            dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {tendermint_coin_info.ticker}});
                         }
                     }
                 }
@@ -992,21 +992,21 @@ namespace atomic_dex
                     SPDLOG_DEBUG("{} failed to activate", rpc.request.ticker);
                     std::unique_lock lock(m_coin_cfg_mutex);
                     m_coins_informations[rpc.request.ticker].currently_enabled = false;
-                    this->dispatcher_.trigger(enabling_coin_failed{.coin = rpc.request.ticker, .reason = rpc.error->error});
+                    this->dispatcher_.enqueue(enabling_coin_failed{.coin = rpc.request.ticker, .reason = rpc.error->error});
                 }
             }
             else
             {
                 std::unique_lock lock(m_coin_cfg_mutex);
                 m_coins_informations[rpc.request.ticker].currently_enabled = true;
-                dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
+                dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {rpc.request.ticker}});
 
                 if constexpr (std::is_same_v<RpcRequest, kdf::enable_tendermint_with_assets_rpc>)
                 {
                     for (const auto& tendermint_token_addresses_info : rpc.result->tendermint_token_balances_infos)
                     {
                         m_coins_informations[tendermint_token_addresses_info.first].currently_enabled = true;
-                        dispatcher_.trigger<coin_fully_initialized>(coin_fully_initialized{.tickers = {tendermint_token_addresses_info.first}});
+                        dispatcher_.enqueue<coin_fully_initialized>(coin_fully_initialized{.tickers = {tendermint_token_addresses_info.first}});
                     }
                 }
             }
@@ -1016,7 +1016,7 @@ namespace atomic_dex
         {
             static constexpr auto error = "{} is not present in the config. Cannot enable TENDERMINT tokens.";
             SPDLOG_ERROR(error);
-            this->dispatcher_.trigger(enabling_coin_failed{.coin = parent_ticker, .reason = fmt::format(error, parent_ticker)});
+            this->dispatcher_.enqueue(enabling_coin_failed{.coin = parent_ticker, .reason = fmt::format(error, parent_ticker)});
             return;
         }
 
@@ -1290,7 +1290,7 @@ namespace atomic_dex
                             {
                                 const std::string error = answer.is_object() ? answer.dump(4) : "Empty/Malformed response element";
                                 SPDLOG_WARN("Muted batch entry error for tx history tracking: {}", error);
-                                this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = true});
+                                this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = true});
                             }
                         }
 
@@ -1301,7 +1301,7 @@ namespace atomic_dex
                     catch (const std::exception& error)
                     {
                         SPDLOG_ERROR("exception in kdf_service::batch_balance_and_tx: {}", error.what());
-                        this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = true});
+                        this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = true});
                         nlohmann::json masked_log_req = tracked_request;
                         if (masked_log_req.contains("userpass")) {
                             masked_log_req["userpass"] = "";
@@ -1843,7 +1843,7 @@ namespace atomic_dex
                     process_orderbook_extras(batch, is_a_reset);
                 }
                 m_orderbook = rpc.result.value();
-                this->dispatcher_.trigger<process_orderbook_finished>(process_orderbook_finished{.is_a_reset = is_a_reset});
+                this->dispatcher_.enqueue<process_orderbook_finished>(process_orderbook_finished{.is_a_reset = is_a_reset});
             }
         };
 
@@ -2107,7 +2107,7 @@ namespace atomic_dex
                 std::filesystem::remove(kdf_cfg_path);
                 crash::clear_kdf_cfg();
                 SPDLOG_INFO("kdf is initialized");
-                dispatcher_.trigger(kdf_initialized{});
+                dispatcher_.enqueue(kdf_initialized{});
                 enable_default_coins();
 
                 // Initialize clean reference anchors on boot execution pass
@@ -2118,7 +2118,7 @@ namespace atomic_dex
                 m_last_activation_fire_time = startup_time - std::chrono::hours(1);
 
                 m_kdf_running = true;
-                dispatcher_.trigger(kdf_started{});
+                dispatcher_.enqueue(kdf_started{});
             });
     }
 
@@ -2342,7 +2342,7 @@ namespace atomic_dex
                 }
             }
 
-            this->dispatcher_.trigger(process_swaps_and_orders_finished{});
+            this->dispatcher_.enqueue(process_swaps_and_orders_finished{});
         };
 
         m_kdf_client.async_rpc_batch_standalone(std::move(batch), t_http_priority::interactive)
@@ -2472,7 +2472,7 @@ namespace atomic_dex
 
                         if (answer.rpc_result_code != 200)
                         {
-                            this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = true, .ticker = ticker});
+                            this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = true, .ticker = ticker});
                         }
                         else if (answer.rpc_result_code != -1 && answer.result.has_value())
                         {
@@ -2526,12 +2526,12 @@ namespace atomic_dex
                                 });
 
                             m_tx_informations->insert_or_assign(ticker, std::make_pair(out, state));
-                            this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = ticker});
+                            this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = ticker});
                         }
                         else
                         {
                             SPDLOG_WARN("tx_history endpoint returned status 200 but payload could not be parsed for ticker {}", ticker);
-                            this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = true, .ticker = ticker});
+                            this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = true, .ticker = ticker});
                         }
                     }
                     catch (...)
@@ -2649,7 +2649,7 @@ namespace atomic_dex
             std::unique_lock lock(m_balance_mutex);
             m_balance_informations.at(ticker).balance = "0";
         }
-        this->dispatcher_.trigger(ticker_balance_updated{.tickers = std::vector<std::string>{ticker}});
+        this->dispatcher_.enqueue(ticker_balance_updated{.tickers = std::vector<std::string>{ticker}});
     }
 
     void
@@ -2669,7 +2669,7 @@ namespace atomic_dex
                 std::unique_lock lock(m_balance_mutex); //! Write
                 m_balance_informations.at(ticker).balance = result.str(8, std::ios_base::fixed);
             }
-            this->dispatcher_.trigger(ticker_balance_updated{.tickers = std::vector<std::string>{ticker}});
+            this->dispatcher_.enqueue(ticker_balance_updated{.tickers = std::vector<std::string>{ticker}});
         }
     }
 
@@ -2746,7 +2746,7 @@ namespace atomic_dex
 
         //! History
         m_tx_informations->insert_or_assign("result", std::make_pair(out, state));
-        this->dispatcher_.trigger<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = std::move(ticker)});
+        this->dispatcher_.enqueue<tx_fetch_finished>(tx_fetch_finished{.with_error = false, .ticker = std::move(ticker)});
     }
 
     void
