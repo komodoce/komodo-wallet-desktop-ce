@@ -314,4 +314,28 @@ namespace atomic_dex::utils
             SPDLOG_DEBUG("UNUSED ??");
         }
     }
+
+    std::string
+    safe_json_string(const std::optional<nlohmann::json>& json_obj, const std::string& key)
+    {
+        if (!json_obj.has_value() || !json_obj->contains(key))
+        {
+            return "";
+        }
+
+        const auto& element = json_obj->at(key);
+        if (element.is_null())
+        {
+            return "";
+        }
+        if (element.is_string())
+        {
+            return element.get<std::string>();
+        }
+        if (element.is_primitive())
+        {
+            return element.dump();
+        }
+        return "";
+    }
 } // namespace atomic_dex::utils

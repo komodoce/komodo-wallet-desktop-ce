@@ -18,11 +18,9 @@
 
 #include <vector>
 #include <filesystem>
-
 #include <date/date.h>           ///< date::format
 #include <date/tz.h>             ///< date::make_zoned
 #include <entt/config/config.h> ///< ENTT_API
-
 #include "safe.float.hpp"
 #include "atomicdex/config/coins.cfg.hpp"
 #include "log.prerequisites.hpp"
@@ -124,5 +122,7 @@ namespace atomic_dex::utils
     //void json_keys(nlohmann::json j);
     int8_t get_index_str(std::vector<std::string> vec, std::string val);
     std::vector<std::string> coin_cfg_to_ticker_cfg(std::vector<coin_config_t> in);
+
+    [[nodiscard]] std::string safe_json_string(const std::optional<nlohmann::json>& json_obj, const std::string& key);
 
 } // namespace atomic_dex::utils
