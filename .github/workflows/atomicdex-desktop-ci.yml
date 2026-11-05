@@ -1,9 +1,6 @@
 name: komodo-wallet-desktop CI
 
 on:
-  push:
-    branches:
-      - nogeo
   workflow_dispatch:
 
 env:
