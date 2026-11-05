@@ -29,9 +29,9 @@ namespace atomic_dex
     struct kdf_config
     {
         std::string              gui{std::string(DEX_NAME) + " "s + atomic_dex::get_version()};
-        int64_t                  netid{8762};
+        int64_t                  netid{6133};
         int64_t                  rpcport{atomic_dex::g_dex_rpcport};
-        std::vector<std::string> seednodes{"seed02.kmdefi.net", "seed04.kmdefi.net", "mm2seed.shorelinecrypto.com", "seed02.swapscope.net", "defi.bluefren.net"};
+        std::vector<std::string> seednodes{"seed02.cipig.net", "kdfseed1.decker.im", "staking1.gleec.com", "staking2.gleec.com", "seed01.swapscope.net", "seed03.kmdefi.net"};
 #ifdef _WIN32
         std::string              userhome{utils::u8string(std::filesystem::path(_wgetenv(L"HOMEPATH")))};
 #else
